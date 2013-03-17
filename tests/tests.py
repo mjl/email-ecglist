@@ -1,0 +1,66 @@
+# ------------------------------------------------------------------------
+# coding=utf-8
+# ------------------------------------------------------------------------
+#
+#  Created by Martin J. Laubach on 2013-03-17
+#  Copyright (c) 2013 Martin J. Laubach. All rights reserved.
+#
+# ------------------------------------------------------------------------
+
+from __future__ import absolute_import
+
+import os
+import sys
+
+import unittest
+
+sys.path.insert(0, os.path.abspath('..'))
+
+from ecglist import ECGList
+
+# ------------------------------------------------------------------------
+class EcglistTest(unittest.TestCase):
+    testlist_emails     = ('karl.testinger@firma.at', 'max.mustermann@home.at')
+    testlist_not        = ('karl.testinger@firmu.ut', 'mix.mustermann@home.at')
+    testlist_domains    = ('foo@home.lan', 'bar@firma.lan')
+    testlist_notdomains = ('foo@home.lon', 'max.mustermann@farma.lan')
+
+    def setUp(self):
+        self.ecglist = ECGList(filename="tests/testliste.hash")
+
+    def test_emails(self):
+        for email in self.testlist_emails:
+            self.assertEqual(self.ecglist.get_blacklist_status_code(email), ECGList.ADDRESS_BLACKLISTED)
+            s = self.ecglist.get_blacklist_status(email)
+            self.assertIsNotNone(s)
+            self.assertIsInstance(s, basestring)
+
+    def test_not_emails(self):
+        for email in self.testlist_not:
+            self.assertIsNone(self.ecglist.get_blacklist_status_code(email))
+            self.assertIsNone(self.ecglist.get_blacklist_status(email))
+
+    def test_domains(self):
+        for email in self.testlist_domains:
+            self.assertEqual(self.ecglist.get_blacklist_status_code(email), ECGList.DOMAIN_BLACKLISTED)
+            s = self.ecglist.get_blacklist_status(email)
+            self.assertIsNotNone(s)
+            self.assertIsInstance(s, basestring)
+
+    def test_not_domains(self):
+        for email in self.testlist_notdomains:
+            self.assertIsNone(self.ecglist.get_blacklist_status_code(email))
+            self.assertIsNone(self.ecglist.get_blacklist_status(email))
+
+    def test_something(self):
+        email = "foobar.baz"
+        self.assertEqual(self.ecglist.get_blacklist_status_code(email), ECGList.NOT_EMAIL_ADDRESS)
+        s = self.ecglist.get_blacklist_status(email)
+        self.assertIsNotNone(s)
+        self.assertIsInstance(s, basestring)
+
+# ------------------------------------------------------------------------
+if __name__ == '__main__':
+    unittest.main()
+
+# ------------------------------------------------------------------------
