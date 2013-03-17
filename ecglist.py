@@ -23,7 +23,7 @@ Typical usage looks like this::
         print "%s does not want to receive email" % email
 """
 
-__version__ = '1.1'
+__version__ = '1.1.1'
 
 import hashlib
 
