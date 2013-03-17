@@ -38,7 +38,7 @@ Get an email's status code::
 `code` will be None if the email address was not found in the blacklist or
 a status code indicating the type of match otherwise.
 
- Same, but get a human readable string instead of a status code::
+Same, but get a human readable string instead of a status code::
 
     status_str = blacklist.get_blacklist_status("foo@bar.example")
 
