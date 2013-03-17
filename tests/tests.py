@@ -28,36 +28,44 @@ class EcglistTest(unittest.TestCase):
     def setUp(self):
         self.ecglist = ECGList(filename="tests/testliste.hash")
 
-    def test_emails(self):
+    def test_01_emails(self):
         for email in self.testlist_emails:
-            self.assertEqual(self.ecglist.get_blacklist_status_code(email), ECGList.ADDRESS_BLACKLISTED)
+            self.assertEqual(self.ecglist.get_blacklist_status(email, numeric=True), ECGList.ADDRESS_BLACKLISTED)
             s = self.ecglist.get_blacklist_status(email)
             self.assertIsNotNone(s)
             self.assertIsInstance(s, basestring)
 
-    def test_not_emails(self):
+    def test_02_not_emails(self):
         for email in self.testlist_not:
-            self.assertIsNone(self.ecglist.get_blacklist_status_code(email))
+            self.assertIsNone(self.ecglist.get_blacklist_status(email, numeric=True))
             self.assertIsNone(self.ecglist.get_blacklist_status(email))
 
-    def test_domains(self):
+    def test_03_domains(self):
         for email in self.testlist_domains:
-            self.assertEqual(self.ecglist.get_blacklist_status_code(email), ECGList.DOMAIN_BLACKLISTED)
+            self.assertEqual(self.ecglist.get_blacklist_status(email, numeric=True), ECGList.DOMAIN_BLACKLISTED)
             s = self.ecglist.get_blacklist_status(email)
             self.assertIsNotNone(s)
             self.assertIsInstance(s, basestring)
 
-    def test_not_domains(self):
+    def test_04_not_domains(self):
         for email in self.testlist_notdomains:
-            self.assertIsNone(self.ecglist.get_blacklist_status_code(email))
+            self.assertIsNone(self.ecglist.get_blacklist_status(email, numeric=True))
             self.assertIsNone(self.ecglist.get_blacklist_status(email))
 
-    def test_something(self):
+    def test_05_email_syntax(self):
         email = "foobar.baz"
-        self.assertEqual(self.ecglist.get_blacklist_status_code(email), ECGList.NOT_EMAIL_ADDRESS)
+        self.assertEqual(self.ecglist.get_blacklist_status(email, numeric=True), ECGList.NOT_EMAIL_ADDRESS)
         s = self.ecglist.get_blacklist_status(email)
         self.assertIsNotNone(s)
         self.assertIsInstance(s, basestring)
+
+    def test_06_in_operator(self):
+        self.assertFalse(self.testlist_not[0] in self.ecglist)
+        self.assertTrue(self.testlist_emails[0] in self.ecglist)
+
+    def test_07_subscript_operator(self):
+        self.assertIsNone(self.ecglist[self.testlist_not[0]])
+        self.assertEquals(self.ecglist[self.testlist_emails[0]], ECGList.ADDRESS_BLACKLISTED)
 
 # ------------------------------------------------------------------------
 if __name__ == '__main__':

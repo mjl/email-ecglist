@@ -20,19 +20,25 @@ Typical usage looks like this::
 Usage
 -----
 
-::
+Set up the interface::
 
     from ecglist import ECGList
 
-    blacklist = ECGList(filename="ecg-liste.hash")
+    # Defaults to reading "ecg-liste.hash" in current directory
+    blacklist = ECGList(filename="my-ecg-list.hash")
+
+Test for an email address being in the blacklist::
+
+    "foo@bar.example" in blacklist
 
 Get an email's status code::
 
-    code = blacklist.get_blacklist_status_code("foo@bar.example")
+    code = blacklist["foo@bar.example"]
 
 `code` will be None if the email address was not found in the blacklist or
-a status code otherwise. Same, but get a human readable string instead of
-a status code::
+a status code indicating the type of match otherwise.
+
+ Same, but get a human readable string instead of a status code::
 
     status_str = blacklist.get_blacklist_status("foo@bar.example")
 
