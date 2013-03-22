@@ -23,7 +23,7 @@ Typical usage looks like this::
         print "%s does not want to receive email" % email
 """
 
-__version__ = '1.1.1'
+__version__ = '1.2'
 
 import hashlib
 
@@ -63,9 +63,9 @@ class ECGList(object):
             email = email.lower()
             name, domain = email.split('@', 1)
 
-            if hashlib.sha1("@" + domain).digest() in self.hash_values:
+            if hashlib.sha1(("@" + domain).encode('UTF-8')).digest() in self.hash_values:
                 return self.DOMAIN_BLACKLISTED
-            if hashlib.sha1(email).digest() in self.hash_values:
+            if hashlib.sha1(email.encode('UTF-8')).digest() in self.hash_values:
                 return self.ADDRESS_BLACKLISTED
             return None
 

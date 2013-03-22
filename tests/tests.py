@@ -19,6 +19,13 @@ sys.path.insert(0, os.path.abspath('..'))
 from ecglist import ECGList
 
 # ------------------------------------------------------------------------
+# Python 3 compat shim
+try:
+    unicode = unicode
+except NameError: # 'unicode' is undefined, must be Python 3
+    basestring = str
+
+# ------------------------------------------------------------------------
 class EcglistTest(unittest.TestCase):
     testlist_emails     = ('karl.testinger@firma.at', 'max.mustermann@home.at')
     testlist_not        = ('karl.testinger@firmu.ut', 'mix.mustermann@home.at')
@@ -65,7 +72,7 @@ class EcglistTest(unittest.TestCase):
 
     def test_07_subscript_operator(self):
         self.assertIsNone(self.ecglist[self.testlist_not[0]])
-        self.assertEquals(self.ecglist[self.testlist_emails[0]], ECGList.ADDRESS_BLACKLISTED)
+        self.assertEqual(self.ecglist[self.testlist_emails[0]], ECGList.ADDRESS_BLACKLISTED)
 
 # ------------------------------------------------------------------------
 if __name__ == '__main__':
