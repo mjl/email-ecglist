@@ -42,6 +42,15 @@ Same, but get a human readable string instead of a status code::
 
     status_str = blacklist.get_blacklist_status("foo@bar.example")
 
+Note that the data file is only loaded when the first address is verified,
+i.e. the address verification might raise an Exception if the hash file has
+vanished in the meantime.
+
+To reread the on-disk hash file or to free up the in-memory hash
+table, use the reread() method like so::
+
+    e.reread()
+
 
 Background
 ----------
