@@ -26,7 +26,6 @@ Note that the data file is only loaded when the first address is verified,
 i.e. the address verification might raise an Exception if the hash file has
 vanished in the mean time.
 
-
 To reread the on-disk hash file or to free up the in-memory hash
 table, use the reread() method like so::
 
@@ -34,10 +33,11 @@ table, use the reread() method like so::
 
 """
 
-__version__ = '1.4'
+__version__ = '1.5'
 
 import hashlib
 import os
+import threading
 
 # ------------------------------------------------------------------------
 class ECGList(object):
@@ -59,7 +59,7 @@ class ECGList(object):
     chunk_size = 20
 
     def __init__(self, filename="ecg-liste.hash"):
-        self.filename = None
+        self.read_lock = threading.Lock()
         self.reread(filename)
 
     def read(self):
@@ -94,8 +94,10 @@ class ECGList(object):
         """
         External use deprecated, use get_blacklist_status(..., numeric=True)
         """
-        if not self.hash_values:
-            self.read()
+        if self.hash_values is None:          # Not yet pulled in hash value from file?
+            with self.read_lock:              # Only one thread may read file at any time
+                if self.hash_values is None:  # Maybe some other thread already updated?
+                    self.read()
 
         if '@' in email:
             email = email.lower()
