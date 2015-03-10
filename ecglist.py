@@ -34,7 +34,7 @@ table, use the reread() method like so::
 
 """
 
-__version__ = '1.3'
+__version__ = '1.4'
 
 import hashlib
 import os
