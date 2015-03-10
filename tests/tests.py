@@ -22,14 +22,14 @@ from ecglist import ECGList
 # Python 3 compat shim
 try:
     unicode = unicode
-except NameError: # 'unicode' is undefined, must be Python 3
+except NameError:  # 'unicode' is undefined, must be Python 3
     basestring = str
 
 # ------------------------------------------------------------------------
 class EcglistTest(unittest.TestCase):
-    testlist_emails     = ('karl.testinger@firma.at', 'max.mustermann@home.at')
-    testlist_not        = ('karl.testinger@firmu.ut', 'mix.mustermann@home.at')
-    testlist_domains    = ('foo@home.lan', 'bar@firma.lan')
+    testlist_emails = ('karl.testinger@firma.at', 'max.mustermann@home.at')
+    testlist_not = ('karl.testinger@firmu.ut', 'mix.mustermann@home.at')
+    testlist_domains = ('foo@home.lan', 'bar@firma.lan')
     testlist_notdomains = ('foo@home.lon', 'max.mustermann@farma.lan')
 
     def setUp(self):
@@ -73,6 +73,19 @@ class EcglistTest(unittest.TestCase):
     def test_07_subscript_operator(self):
         self.assertIsNone(self.ecglist[self.testlist_not[0]])
         self.assertEqual(self.ecglist[self.testlist_emails[0]], ECGList.ADDRESS_BLACKLISTED)
+
+    def test_08_lazy_loading(self):
+        e = ECGList(filename="tests/testliste.hash")
+        assert(e.hash_values is None)
+        assert('foo4711@this.is.not.an.email.address' not in e)
+        assert(e.hash_values is not None)
+        assert(len(e.hash_values) == 4)
+
+    def test_09_notexistant(self):
+        self.assertRaises(IOError, ECGList, filename="something.not.there")
+
+    def test_10_badsize(self):
+        self.assertRaises(ValueError, ECGList, filename="tests/__init__.py")
 
 # ------------------------------------------------------------------------
 if __name__ == '__main__':

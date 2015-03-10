@@ -8,7 +8,7 @@
 # ------------------------------------------------------------------------
 
 """
-This package provides simple access to the austrian RTR (Rundfunk und Telekom
+This package provides simple access to the Austrian RTR (Rundfunk und Telekom
 Regulierungs-GmbH) "ECG list", the registry of persons and companies who do
 not wish to receive promotional e-mail.
 
@@ -16,16 +16,28 @@ Typical usage looks like this::
 
     from ecglist import ECGList
 
-    e = ECGList()
+    e = ECGList("/data/ecg-liste.hash")
     if email not in e:
         send_email(email)
     else:
         print "%s does not want to receive email" % email
+
+Note that the data file is only loaded when the first address is verified,
+i.e. the address verification might raise an Exception if the hash file has
+vanished in the mean time.
+
+
+To reread the on-disk hash file or to free up the in-memory hash
+table, use the reread() method like so::
+
+    e.reread()
+
 """
 
-__version__ = '1.2'
+__version__ = '1.3'
 
 import hashlib
+import os
 
 # ------------------------------------------------------------------------
 class ECGList(object):
@@ -34,31 +46,57 @@ class ECGList(object):
     do-not-email blacklist.
     """
 
-    NOT_EMAIL_ADDRESS   = 1
-    DOMAIN_BLACKLISTED  = 2
+    NOT_EMAIL_ADDRESS = 1
+    DOMAIN_BLACKLISTED = 2
     ADDRESS_BLACKLISTED = 3
 
     status_str = {
-        NOT_EMAIL_ADDRESS:   "Not an email address",
-        DOMAIN_BLACKLISTED:  "Domain blacklisted",
+        NOT_EMAIL_ADDRESS: "Not an email address",
+        DOMAIN_BLACKLISTED: "Domain blacklisted",
         ADDRESS_BLACKLISTED: "Address blacklisted"
     }
 
+    chunk_size = 20
+
     def __init__(self, filename="ecg-liste.hash"):
-        hash_values = {}
-        with open(filename, "rb") as f:
+        self.filename = None
+        self.reread(filename)
+
+    def read(self):
+        hash_values = set()
+        with open(self.filename, "rb", buffering=self.chunk_size * 8192) as f:
             while True:
-                chunk = f.read(20)
-                if len(chunk) < 20:
+                chunk = f.read(self.chunk_size)
+                if len(chunk) < self.chunk_size:
                     break
-                hash_values[chunk] = 1
+                hash_values.add(chunk)
 
         self.hash_values = hash_values
 
-    def get_blacklist_status_code(self, email):
+    def reread(self, filename=None):
+        """
+        Reset the internal state, throw away any cached hash values and
+        optionally set a new file name. Use to free up memory after use
+
+        """
+        if filename is not None:
+            self.filename = filename
+        if self.filename is None:
+            raise ValueError("ECGList needs a file name")
+        if not os.path.isfile(self.filename):
+            raise IOError("Path '%s' is not accessible" % self.filename)
+        file_size = os.path.getsize(self.filename)
+        if file_size == 0 or file_size % self.chunk_size != 0:
+            raise ValueError("File '%s' is not a valid hash file" % self.filename)
+        self.hash_values = None
+
+    def _get_blacklist_status_code(self, email):
         """
         External use deprecated, use get_blacklist_status(..., numeric=True)
         """
+        if not self.hash_values:
+            self.read()
+
         if '@' in email:
             email = email.lower()
             name, domain = email.split('@', 1)
@@ -77,22 +115,22 @@ class ECGList(object):
         None or a status. The status is either a string describing
         the type of listing or a numeric status code (if numeric=True)
         """
-        status = self.get_blacklist_status_code(email)
+        status = self._get_blacklist_status_code(email)
         if numeric:
             return status
         return self.status_str[status] if status else None
 
     def __contains__(self, email):
         """
-        Implement "in" operator. Return True if email is blacklisted,
-        False otherwise
+        Implement "in" operator. Return truthy if email is blacklisted,
+        with the return value being the error code, falsy otherwise.
         """
-        return self.get_blacklist_status_code(email)
+        return self._get_blacklist_status_code(email)
 
     def __getitem__(self, email):
         """
         Implement indexing operator. Return result as of get_blacklist_status()
         """
-        return self.get_blacklist_status_code(email)
+        return self._get_blacklist_status_code(email)
 
 # ------------------------------------------------------------------------
