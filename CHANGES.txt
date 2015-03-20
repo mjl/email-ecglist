@@ -5,3 +5,5 @@
                    Lazy initialise hash tables
 1.5, 2015-03-10 -- Multithreading fix, guard against several threads 
                    attempting to pull in data at the same time
+1.6, 2015-03-20 -- Defer raising exceptions on the hash file until
+                   it's actually needed, not at init time                   

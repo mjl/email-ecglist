@@ -33,7 +33,7 @@ table, use the reread() method like so::
 
 """
 
-__version__ = '1.5'
+__version__ = '1.6'
 
 import hashlib
 import os
@@ -56,13 +56,19 @@ class ECGList(object):
         ADDRESS_BLACKLISTED: "Address blacklisted"
     }
 
-    chunk_size = 20
+    chunk_size = 20  # Size of a hash entry, 160 bit
 
     def __init__(self, filename="ecg-liste.hash"):
         self.read_lock = threading.Lock()
         self.reread(filename)
 
     def read(self):
+        if not os.path.isfile(self.filename):
+            raise IOError("Path '%s' is not accessible" % self.filename)
+        file_size = os.path.getsize(self.filename)
+        if file_size == 0 or file_size % self.chunk_size != 0:
+            raise ValueError("File '%s' is not a valid hash file" % self.filename)
+
         hash_values = set()
         with open(self.filename, "rb", buffering=self.chunk_size * 8192) as f:
             while True:
@@ -79,16 +85,9 @@ class ECGList(object):
         optionally set a new file name. Use to free up memory after use
 
         """
+        self.hash_values = None
         if filename is not None:
             self.filename = filename
-        if self.filename is None:
-            raise ValueError("ECGList needs a file name")
-        if not os.path.isfile(self.filename):
-            raise IOError("Path '%s' is not accessible" % self.filename)
-        file_size = os.path.getsize(self.filename)
-        if file_size == 0 or file_size % self.chunk_size != 0:
-            raise ValueError("File '%s' is not a valid hash file" % self.filename)
-        self.hash_values = None
 
     def _get_blacklist_status_code(self, email):
         """
@@ -103,7 +102,7 @@ class ECGList(object):
             email = email.lower()
             name, domain = email.split('@', 1)
 
-            if hashlib.sha1(("@" + domain).encode('UTF-8')).digest() in self.hash_values:
+            if hashlib.sha1((u"@" + domain).encode('UTF-8')).digest() in self.hash_values:
                 return self.DOMAIN_BLACKLISTED
             if hashlib.sha1(email.encode('UTF-8')).digest() in self.hash_values:
                 return self.ADDRESS_BLACKLISTED
